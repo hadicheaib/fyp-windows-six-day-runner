@@ -1,0 +1,15 @@
+{
+  "planning_release": "LBN-P1-2026-11-19",
+  "routes": {
+    "west": {
+      "windows": 5000,
+      "sha256": "41d874086dfcc104bcc604dd22f4f97c569a94c6844b7ebc00607d755a9f1ae5",
+      "governorates": {"Nabatieh": 5000}
+    },
+    "east": {
+      "windows": 5000,
+      "sha256": "afa09f0cc5ae72a20adfdef6053df84557a128cf31af5b87b1fec54048c319cc",
+      "governorates": {"Nabatieh": 5000}
+    }
+  }
+}

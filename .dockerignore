@@ -1,0 +1,9 @@
+**
+!pyproject.toml
+!src/
+!src/lebanon_discovery/
+!src/lebanon_discovery/*.py
+!deploy/
+!deploy/maps/
+!deploy/maps/Dockerfile
+!deploy/maps/requirements.txt

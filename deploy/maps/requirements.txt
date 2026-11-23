@@ -1,0 +1,4 @@
+# Browser package and the installed Chromium revision are resolved together.
+playwright==1.64.0
+opencv-python-headless==4.11.0.86
+numpy==2.1.1

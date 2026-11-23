@@ -1,0 +1,110 @@
+name: fyp-pc5-six-day-${FYP_RUN_MODE:-fixture}
+
+x-collector: &collector
+  image: fyp-pc5-pair-maps:2026-11-23
+  pull_policy: never
+  depends_on:
+    pace-init:
+      condition: service_completed_successfully
+  command: ["run", "--data", "/data", "--inputs", "/inputs"]
+  init: true
+  user: "10001:10001"
+  network_mode: ${FYP_RUN_NETWORK:-none}
+  cpus: 2
+  mem_limit: 8g
+  shm_size: 1gb
+  read_only: true
+  tmpfs:
+    - /tmp:size=2g,mode=1777
+  security_opt:
+    - seccomp=./deploy/maps/seccomp_profile.json
+  stop_grace_period: 180s
+  restart: ${FYP_RESTART_POLICY:-on-failure:2}
+  healthcheck:
+    test: ["CMD", "python", "-m", "lebanon_discovery.cloud_maps", "health", "--data", "/data"]
+    interval: 30s
+    timeout: 5s
+    start_period: 60s
+    retries: 3
+  environment: &collector-env
+    FYP_MODE: ${FYP_RUN_MODE:-fixture}
+    FYP_ENABLE_LIVE: ${FYP_ENABLE_LIVE:-0}
+    FYP_WORKERS: "1"
+    FYP_SESSION_SECONDS: "518400"
+    FYP_BATCH_SECONDS: "1800"
+    FYP_CHECKPOINT_SECONDS: "60"
+    FYP_HOURLY_LIMIT: "57"
+    FYP_EXIT_WHEN_TERMINAL: "1"
+    FYP_MEMORY_MIB: "8192"
+
+x-exporter: &exporter
+  image: fyp-pc5-pair-exporter:2026-11-23
+  pull_policy: never
+  init: true
+  environment:
+    FYP_RUN_MODE: ${FYP_RUN_MODE:-fixture}
+  network_mode: none
+  read_only: true
+  tmpfs: [/tmp]
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  mem_limit: 256m
+  restart: unless-stopped
+
+services:
+  pace-init:
+    image: fyp-pc5-pair-maps:2026-11-23
+    build:
+      context: .
+      dockerfile: deploy/maps/Dockerfile
+    user: "0:0"
+    entrypoint: ["python", "-m", "lebanon_discovery.host_pace"]
+    environment:
+      FYP_RUN_MODE: ${FYP_RUN_MODE:-fixture}
+    volumes:
+      - west-state:/state-west
+      - east-state:/state-east
+      - host-pace:/pace
+    network_mode: none
+    read_only: true
+
+  collector-west:
+    <<: *collector
+    environment:
+      <<: *collector-env
+      FYP_PC5_LANE: west
+      FYP_SCOPE_NOTE: "PC 5 six-day Nabatieh west LBN-P1-2026-11-19"
+    volumes:
+      - west-state:/data
+      - host-pace:/pace
+      - ./routes/west:/inputs:ro
+
+  collector-east:
+    <<: *collector
+    environment:
+      <<: *collector-env
+      FYP_PC5_LANE: east
+      FYP_SCOPE_NOTE: "PC 5 six-day Nabatieh central/east LBN-P1-2026-11-19"
+    volumes:
+      - east-state:/data
+      - host-pace:/pace
+      - ./routes/east:/inputs:ro
+
+  exporter-west:
+    <<: *exporter
+    build:
+      context: ./exporter
+    volumes:
+      - west-state:/data:ro
+      - ./runtime/west/${FYP_RUN_MODE:-fixture}:/exports
+
+  exporter-east:
+    <<: *exporter
+    volumes:
+      - east-state:/data:ro
+      - ./runtime/east/${FYP_RUN_MODE:-fixture}:/exports
+
+volumes:
+  west-state:
+  east-state:
+  host-pace:

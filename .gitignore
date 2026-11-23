@@ -1,0 +1,15 @@
+.env
+.env.*
+runtime/
+__pycache__/
+*.py[cod]
+*.sqlite*
+*.db
+*.log
+*.xlsx
+*.pem
+*.key
+*.csv
+*.tsv
+*.zip
+*.pfx
